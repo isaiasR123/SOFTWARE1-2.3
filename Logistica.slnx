@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="Aplicacion/Aplicacion.csproj" />
-  <Project Path="Persistencia/Persistencia.csproj" />
-  <Project Path="Test/Test.csproj" />
+    <Project Path="src/Aplicacion/Aplicacion.csproj" />
+    <Project Path="src/Persistencia/Persistencia.csproj" />
+    <Project Path="src/Test/Test.csproj" />
 </Solution>
