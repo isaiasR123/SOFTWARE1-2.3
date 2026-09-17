@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "23tkl38x9EkOinpjfRyqWiwdVIcDwtXbYRiehZPTFeuaEyVDlGD/dhB3nEwiB6/BRE4UoucsU2zWxG6Nh4zZuA==",
+  "dgSpecHash": "ORh3gxTgMqE2+4etX7b9P01fj64eDhz4yh+8dHUGNjRjzmPsGLbXcmOj0V/1WchNyKUjSWW2WiQ+R/qwONyAAA==",
   "success": true,
-  "projectFilePath": "/home/et12alumno/Isaias/SOFTWARE1-2.3/src/Persistencia/Persistencia.csproj",
+  "projectFilePath": "/home/et12alumno/isaias/SOFTWARE1-2.3/src/Persistencia/Persistencia.csproj",
   "expectedPackageFiles": [
     "/home/et12alumno/.nuget/packages/dapper/2.1.86/dapper.2.1.86.nupkg.sha512",
     "/home/et12alumno/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/8.0.2/microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",

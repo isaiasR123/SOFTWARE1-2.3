@@ -240,11 +240,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/et12alumno/Isaias/SOFTWARE1-2.3/src/Persistencia/Persistencia.csproj",
+      "projectUniqueName": "/home/et12alumno/isaias/SOFTWARE1-2.3/src/Persistencia/Persistencia.csproj",
       "projectName": "Persistencia",
-      "projectPath": "/home/et12alumno/Isaias/SOFTWARE1-2.3/src/Persistencia/Persistencia.csproj",
+      "projectPath": "/home/et12alumno/isaias/SOFTWARE1-2.3/src/Persistencia/Persistencia.csproj",
       "packagesPath": "/home/et12alumno/.nuget/packages/",
-      "outputPath": "/home/et12alumno/Isaias/SOFTWARE1-2.3/src/Persistencia/obj/",
+      "outputPath": "/home/et12alumno/isaias/SOFTWARE1-2.3/src/Persistencia/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/et12alumno/.nuget/NuGet/NuGet.Config"

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "CKNRfQZxFBfCXLCc4/N4Lm7+l4cKQj3TA9X0Q76F89cY+mLeFvG8JIXWjm83SL7v5S325xqyBkycVHh45Jo3mw==",
+  "dgSpecHash": "GaAPxuATrpFLXgfPRdwrusJuLZuuNVNL9gkPT9XSK5WtOaoSqFBG5okbGvvcAhEeYmzokvFxEuPYjxNz21HEQQ==",
   "success": true,
-  "projectFilePath": "/home/et12alumno/Isaias/SOFTWARE1-2.3/src/Aplicacion/Aplicacion.csproj",
+  "projectFilePath": "/home/et12alumno/isaias/SOFTWARE1-2.3/src/Aplicacion/Aplicacion.csproj",
   "expectedPackageFiles": [
     "/home/et12alumno/.nuget/packages/dapper/2.1.86/dapper.2.1.86.nupkg.sha512",
     "/home/et12alumno/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/8.0.2/microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",
