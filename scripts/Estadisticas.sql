@@ -6,40 +6,6 @@ USE logistica;
 
 DELIMITER //
 
-CREATE PROCEDURE ResumenEnviosPorPeriodo(
-    IN p_FechaInicio DATETIME,
-    IN p_FechaFin DATETIME
-)
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        RESIGNAL;
-    END;
-
-    START TRANSACTION;
-
-    SELECT
-        m.Nombre AS Modalidad,
-        e.Nombre AS Estado,
-        COUNT(*) AS CantidadEnvios,
-        SUM(en.Costo) AS CostoTotal,
-        AVG(en.Costo) AS CostoPromedio
-    FROM Envio en
-    INNER JOIN Modalidad m
-        ON en.IdModalidad = m.IdModalidad
-    INNER JOIN Estado e
-        ON en.IdEstado = e.IdEstado
-    WHERE en.FechaEnvio BETWEEN p_FechaInicio AND p_FechaFin
-    GROUP BY
-        m.Nombre,
-        e.Nombre
-    ORDER BY
-        m.Nombre,
-        e.Nombre;
-
-    COMMIT;
-END //
 
 DELIMITER ;
 
