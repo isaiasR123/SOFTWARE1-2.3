@@ -2,9 +2,7 @@ CREATE DATABASE IF NOT EXISTS logistica;
 
 USE logistica;
 
--- =========================================
--- TABLA DIRECCION
--- =========================================
+
 
 CREATE TABLE Direccion (
     IdDireccion INT AUTO_INCREMENT PRIMARY KEY,
@@ -17,9 +15,7 @@ CREATE TABLE Direccion (
 );
 
 
--- =========================================
--- TABLA CLIENTE
--- =========================================
+
 
 CREATE TABLE Cliente (
     IdCliente INT AUTO_INCREMENT PRIMARY KEY,
@@ -33,9 +29,7 @@ CREATE TABLE Cliente (
 );
 
 
--- =========================================
--- TABLA PAQUETE
--- =========================================
+
 
 CREATE TABLE Paquete (
     IdPaquete INT AUTO_INCREMENT PRIMARY KEY,
@@ -59,9 +53,6 @@ CREATE TABLE Paquete (
 );
 
 
--- =========================================
--- TABLA MODALIDAD
--- =========================================
 
 CREATE TABLE Modalidad (
     IdModalidad INT AUTO_INCREMENT PRIMARY KEY,
@@ -69,9 +60,6 @@ CREATE TABLE Modalidad (
 );
 
 
--- =========================================
--- TABLA ESTADO
--- =========================================
 
 CREATE TABLE Estado (
     IdEstado INT AUTO_INCREMENT PRIMARY KEY,
@@ -79,9 +67,7 @@ CREATE TABLE Estado (
 );
 
 
--- =========================================
--- TABLA ENVIO
--- =========================================
+
 
 CREATE TABLE Envio (
     IdEnvio INT AUTO_INCREMENT PRIMARY KEY,
@@ -135,9 +121,7 @@ CREATE TABLE Envio (
 );
 
 
--- =========================================
--- TABLA HISTORIAL DE ESTADOS
--- =========================================
+
 
 CREATE TABLE HistorialEstado (
     IdHistorial INT AUTO_INCREMENT PRIMARY KEY,
@@ -156,9 +140,6 @@ CREATE TABLE HistorialEstado (
         REFERENCES Estado(IdEstado)
 );
 
--- =========================================
--- MODALIDADES INICIALES
--- =========================================
 
 INSERT INTO Modalidad (Nombre)
 VALUES
@@ -167,9 +148,7 @@ VALUES
     ('Prioritario');
 
 
--- =========================================
--- ESTADOS INICIALES
--- =========================================
+
 
 INSERT INTO Estado (Nombre)
 VALUES

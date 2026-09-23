@@ -1,8 +1,5 @@
 USE logistica;
 
--- =========================================
--- PROCEDURE 1: REGISTRAR ENVÍO COMPLETO
--- =========================================
 
 DELIMITER //
 
@@ -23,20 +20,20 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Buscar el estado inicial "Pendiente"
+   
     SELECT IdEstado
     INTO v_IdEstado
     FROM Estado
     WHERE Nombre = 'Pendiente';
 
-    -- Validar que exista el estado inicial
+    
     IF v_IdEstado IS NULL THEN
         ROLLBACK;
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'No existe el estado Pendiente';
     END IF;
 
-    -- Registrar el envío
+   
     INSERT INTO Envio (
         IdCliente,
         IdPaquete,
@@ -60,10 +57,10 @@ BEGIN
         p_TiempoEstimado
     );
 
-    -- Obtener el ID del envío creado
+    
     SET v_IdEnvio = LAST_INSERT_ID();
 
-    -- Registrar el estado inicial en el historial
+    
     INSERT INTO HistorialEstado (
         IdEnvio,
         IdEstado
@@ -80,9 +77,7 @@ END //
 DELIMITER ;
 
 
--- =========================================
--- PROCEDURE 2: ACTUALIZAR ESTADO
--- =========================================
+
 
 DELIMITER //
 
@@ -96,20 +91,20 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Obtener el estado actual
+    
     SELECT IdEstado
     INTO v_IdEstadoActual
     FROM Envio
     WHERE IdEnvio = p_IdEnvio;
 
-    -- Validar que exista el envío
+    
     IF v_IdEstadoActual IS NULL THEN
         ROLLBACK;
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'El envío no existe';
     END IF;
 
-    -- Validar que exista el nuevo estado
+    
     IF NOT EXISTS (
         SELECT 1
         FROM Estado
@@ -120,19 +115,19 @@ BEGIN
             SET MESSAGE_TEXT = 'El estado indicado no existe';
     END IF;
 
-    -- Evitar actualizar al mismo estado
+    
     IF v_IdEstadoActual = p_IdEstadoNuevo THEN
         ROLLBACK;
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'El envío ya posee ese estado';
     END IF;
 
-    -- Actualizar estado
+    
     UPDATE Envio
     SET IdEstado = p_IdEstadoNuevo
     WHERE IdEnvio = p_IdEnvio;
 
-    -- Registrar el cambio en el historial
+    
     INSERT INTO HistorialEstado (
         IdEnvio,
         IdEstado

@@ -1,8 +1,6 @@
 USE logistica;
 
--- =====================================================
--- 1. RESUMEN DE ENVÍOS POR PERÍODO, MODALIDAD Y ESTADO
--- =====================================================
+
 
 DELIMITER //
 
@@ -10,9 +8,7 @@ DELIMITER //
 DELIMITER ;
 
 
--- =====================================================
--- 2. COSTOS ACUMULADOS Y PROMEDIO POR MODALIDAD
--- =====================================================
+
 
 DELIMITER //
 
@@ -48,9 +44,7 @@ END //
 DELIMITER ;
 
 
--- =====================================================
--- 3. COMPARATIVA DE ENTREGADOS, CANCELADOS Y PENDIENTES
--- =====================================================
+
 
 DELIMITER //
 
@@ -86,9 +80,7 @@ END //
 DELIMITER ;
 
 
--- =====================================================
--- 4. TIEMPO PROMEDIO DE ENTREGA POR MODALIDAD
--- =====================================================
+
 
 DELIMITER //
 
@@ -126,9 +118,7 @@ END //
 DELIMITER ;
 
 
--- =====================================================
--- 5. FACTURACIÓN TOTAL POR MODALIDAD Y PERÍODO
--- =====================================================
+
 
 DELIMITER //
 
