@@ -2,7 +2,7 @@ using Dapper;
 using Persistencia;
 using Persistencia.Repositorios;
 using System.Data;
-
+using Persistencia.Entidades;
 namespace Aplicacion.Servicios;
 
 public class EnvioService
@@ -22,59 +22,39 @@ public class EnvioService
     // REGISTRAR ENVÍO
     // ==========================================
 
-    public void RegistrarEnvio(
-        int idCliente,
-        int idPaquete,
-        int idModalidad,
-        int idDireccionOrigen,
-        int idDireccionDestino,
-        decimal distancia,
-        decimal costo,
-        int tiempoEstimado)
-    {
-        if (idCliente <= 0)
-            throw new ArgumentException("El cliente no es válido.");
+  public void RegistrarEnvio(
+    Envio envio,
+    int idModalidad)
+{
+    if (envio == null)
+        throw new ArgumentException("El envío es obligatorio.");
 
-        if (idPaquete <= 0)
-            throw new ArgumentException("El paquete no es válido.");
+    if (idModalidad <= 0)
+        throw new ArgumentException("La modalidad no es válida.");
 
-        if (idModalidad <= 0)
-            throw new ArgumentException("La modalidad no es válida.");
+    double costo = envio.CalcularCosto();
 
-        if (idDireccionOrigen <= 0)
-            throw new ArgumentException("La dirección de origen no es válida.");
+    double tiempoEstimado =
+        envio.CalcularTiempoEntrega();
 
-        if (idDireccionDestino <= 0)
-            throw new ArgumentException("La dirección de destino no es válida.");
+    using var conexion =
+        _connectionFactory.CrearConexionDesarrollo();
 
-        if (distancia <= 0)
-            throw new ArgumentException("La distancia debe ser mayor que cero.");
-
-        if (costo < 0)
-            throw new ArgumentException("El costo no puede ser negativo.");
-
-        if (tiempoEstimado <= 0)
-            throw new ArgumentException(
-                "El tiempo estimado debe ser mayor que cero.");
-
-        using var conexion =
-            _connectionFactory.CrearConexionDesarrollo();
-
-        conexion.Execute(
-            "RegistrarEnvioCompleto",
-            new
-            {
-                p_IdCliente = idCliente,
-                p_IdPaquete = idPaquete,
-                p_IdModalidad = idModalidad,
-                p_IdDireccionOrigen = idDireccionOrigen,
-                p_IdDireccionDestino = idDireccionDestino,
-                p_Distancia = distancia,
-                p_Costo = costo,
-                p_TiempoEstimado = tiempoEstimado
-            },
-            commandType: CommandType.StoredProcedure);
-    }
+    conexion.Execute(
+        "RegistrarEnvioCompleto",
+        new
+        {
+            p_IdCliente = envio.Cliente.Id,
+            p_IdPaquete = envio.Paquete.Id,
+            p_IdModalidad = idModalidad,
+            p_IdDireccionOrigen = envio.DireccionOrigen.Id,
+            p_IdDireccionDestino = envio.DireccionDestino.Id,
+            p_Distancia = envio.Distancia,
+            p_Costo = costo,
+            p_TiempoEstimado = tiempoEstimado
+        },
+        commandType: CommandType.StoredProcedure);
+}
 
     // ==========================================
     // RECUPERAR / LISTAR ENVÍOS
