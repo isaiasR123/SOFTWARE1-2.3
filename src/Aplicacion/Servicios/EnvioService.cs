@@ -3,6 +3,7 @@ using Persistencia;
 using Persistencia.Repositorios;
 using System.Data;
 using Persistencia.Entidades;
+
 namespace Aplicacion.Servicios;
 
 public class EnvioService
@@ -22,39 +23,53 @@ public class EnvioService
     // REGISTRAR ENVÍO
     // ==========================================
 
-  public void RegistrarEnvio(
-    Envio envio,
-    int idModalidad)
-{
-    if (envio == null)
-        throw new ArgumentException("El envío es obligatorio.");
+    public void RegistrarEnvio(Envio envio)
+    {
+        if (envio == null)
+            throw new ArgumentException("El envío es obligatorio.");
 
-    if (idModalidad <= 0)
-        throw new ArgumentException("La modalidad no es válida.");
+        int idModalidad;
 
-    double costo = envio.CalcularCosto();
-
-    double tiempoEstimado =
-        envio.CalcularTiempoEntrega();
-
-    using var conexion =
-        _connectionFactory.CrearConexionDesarrollo();
-
-    conexion.Execute(
-        "RegistrarEnvioCompleto",
-        new
+        if (envio is EnvioEstandar)
         {
-            p_IdCliente = envio.Cliente.Id,
-            p_IdPaquete = envio.Paquete.Id,
-            p_IdModalidad = idModalidad,
-            p_IdDireccionOrigen = envio.DireccionOrigen.Id,
-            p_IdDireccionDestino = envio.DireccionDestino.Id,
-            p_Distancia = envio.Distancia,
-            p_Costo = costo,
-            p_TiempoEstimado = tiempoEstimado
-        },
-        commandType: CommandType.StoredProcedure);
-}
+            idModalidad = 1;
+        }
+        else if (envio is EnvioExpress)
+        {
+            idModalidad = 2;
+        }
+        else if (envio is EnvioPrioritario)
+        {
+            idModalidad = 3;
+        }
+        else
+        {
+            throw new ArgumentException("El tipo de envío no es válido.");
+        }
+
+        double costo = envio.CalcularCosto();
+
+        double tiempoEstimado =
+            envio.CalcularTiempoEntrega();
+
+        using var conexion =
+            _connectionFactory.CrearConexionDesarrollo();
+
+        conexion.Execute(
+            "RegistrarEnvioCompleto",
+            new
+            {
+                p_IdCliente = envio.Cliente.Id,
+                p_IdPaquete = envio.Paquete.Id,
+                p_IdModalidad = idModalidad,
+                p_IdDireccionOrigen = envio.DireccionOrigen.Id,
+                p_IdDireccionDestino = envio.DireccionDestino.Id,
+                p_Distancia = envio.Distancia,
+                p_Costo = costo,
+                p_TiempoEstimado = tiempoEstimado
+            },
+            commandType: CommandType.StoredProcedure);
+    }
 
     // ==========================================
     // RECUPERAR / LISTAR ENVÍOS
