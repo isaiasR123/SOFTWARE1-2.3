@@ -6,17 +6,12 @@ using Persistencia.Repositorios;
 
 using Persistencia.Entidades;
 
-string password =
-
-    Environment.GetEnvironmentVariable("LOGISTICA_DB_PASSWORD") ?? "";
 
 string conexionAdministrador =
-
-    $"Server=localhost;Database=logistica;User ID=5to_agbd;Password={password};";
+    $"Server=localhost;Database=logistica;User ID=5to_agbd;Password=Trigg3rs!;";
 
 string conexionDesarrollo =
-
-    $"Server=localhost;Database=logistica;User ID=5to_agbd;Password={password};";
+    $"Server=localhost;Database=logistica;User ID=5to_agbd;Password=Trigg3rs!;";
 
 IDbConnectionFactory factory =
 
