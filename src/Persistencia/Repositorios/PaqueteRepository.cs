@@ -16,7 +16,7 @@ public class PaqueteRepository
         object? parametros = null)
     {
         using var conexion =
-            _connectionFactory.CrearConexionDesarrollo();
+            _connectionFactory.CrearConexionInvitado();
 
         return conexion.Query<T>(sql, parametros);
     }
@@ -26,7 +26,7 @@ public class PaqueteRepository
         object parametros)
     {
         using var conexion =
-            _connectionFactory.CrearConexionDesarrollo();
+            _connectionFactory.CrearConexionInvitado();
 
         return conexion.QueryFirst<T>(sql, parametros);
     }
@@ -36,7 +36,7 @@ public class PaqueteRepository
         object parametros)
     {
         using var conexion =
-            _connectionFactory.CrearConexionDesarrollo();
+            _connectionFactory.CrearConexionAdministrador();
 
         return conexion.Execute(sql, parametros);
     }

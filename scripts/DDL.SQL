@@ -10,6 +10,7 @@ CREATE TABLE Direccion (
     Numero INT NOT NULL,
     Ciudad VARCHAR(100) NOT NULL,
 
+
     CONSTRAINT CK_Direccion_Numero
         CHECK (Numero > 0)
 );

@@ -10,3 +10,6 @@
 # Archivos temporales
 *.tmp
 *.log
+.env
+.env.*
+scripts/Usuarios.local.sql

@@ -17,7 +17,7 @@ public class EstadisticaService
         DateTime fechaFin)
     {
         using var conexion =
-            _connectionFactory.CrearConexionDesarrollo();
+            _connectionFactory.CrearConexionInvitado();
 
         return conexion.Query(
             "ResumenEnviosPorPeriodo",
@@ -34,7 +34,7 @@ public class EstadisticaService
         DateTime fechaFin)
     {
         using var conexion =
-            _connectionFactory.CrearConexionDesarrollo();
+            _connectionFactory.CrearConexionInvitado();
 
         return conexion.Query(
             "CostosPorModalidad",
@@ -51,7 +51,7 @@ public class EstadisticaService
         DateTime fechaFin)
     {
         using var conexion =
-            _connectionFactory.CrearConexionDesarrollo();
+            _connectionFactory.CrearConexionInvitado();
 
         return conexion.Query(
             "ComparativaEstadosPorPeriodo",
@@ -68,7 +68,7 @@ public class EstadisticaService
         DateTime fechaFin)
     {
         using var conexion =
-            _connectionFactory.CrearConexionDesarrollo();
+            _connectionFactory.CrearConexionInvitado();
 
         return conexion.Query(
             "TiempoPromedioEntrega",
@@ -85,7 +85,7 @@ public class EstadisticaService
         DateTime fechaFin)
     {
         using var conexion =
-            _connectionFactory.CrearConexionDesarrollo();
+            _connectionFactory.CrearConexionInvitado();
 
         return conexion.Query(
             "FacturacionPorModalidad",

@@ -53,7 +53,7 @@ public class EnvioService
             envio.CalcularTiempoEntrega();
 
         using var conexion =
-            _connectionFactory.CrearConexionDesarrollo();
+            _connectionFactory.CrearConexionAdministrador();
 
         conexion.Execute(
             "RegistrarEnvioCompleto",
@@ -77,7 +77,7 @@ public class EnvioService
 
     public IEnumerable<dynamic> ListarEnvios()
     {
-        return _envioRepository.ConsultarDesarrollo<dynamic>(
+        return _envioRepository.ConsultarInvitado<dynamic>(
             "SELECT * FROM Envio");
     }
 
@@ -90,7 +90,7 @@ public class EnvioService
         if (idEnvio <= 0)
             throw new ArgumentException("El ID del envío no es válido.");
 
-        return _envioRepository.ConsultarPrimeroDesarrollo<dynamic>(
+        return _envioRepository.ConsultarPrimeroInvitado<dynamic>(
             "SELECT * FROM Envio WHERE IdEnvio = @IdEnvio",
             new { IdEnvio = idEnvio });
     }
@@ -110,7 +110,7 @@ public class EnvioService
             throw new ArgumentException("El estado no es válido.");
 
         using var conexion =
-            _connectionFactory.CrearConexionDesarrollo();
+            _connectionFactory.CrearConexionAdministrador();
 
         conexion.Execute(
             "ActualizarEstadoEnvio",
@@ -132,7 +132,7 @@ public class EnvioService
             throw new ArgumentException("El ID del envío no es válido.");
 
         using var conexion =
-            _connectionFactory.CrearConexionDesarrollo();
+            _connectionFactory.CrearConexionAdministrador();
 
         conexion.Execute(
             "CancelarEnvio",
@@ -152,7 +152,7 @@ public class EnvioService
         if (idEnvio <= 0)
             throw new ArgumentException("El ID del envío no es válido.");
 
-        return _envioRepository.ConsultarDesarrollo<dynamic>(
+        return _envioRepository.ConsultarInvitado<dynamic>(
             """
             SELECT
                 h.IdHistorial,

@@ -6,5 +6,5 @@ public interface IDbConnectionFactory
 {
     IDbConnection CrearConexionAdministrador();
 
-    IDbConnection CrearConexionDesarrollo();
+    IDbConnection CrearConexionInvitado();
 }
