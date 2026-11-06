@@ -1,4 +1,4 @@
-namespace Aplicacion.Modalidades;
+namespace Aplicacion.Interfaces;
 
 public interface IEnvioModalidad
 {

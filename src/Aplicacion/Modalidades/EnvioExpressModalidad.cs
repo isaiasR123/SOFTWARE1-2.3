@@ -1,3 +1,5 @@
+using Aplicacion.Interfaces;
+
 namespace Aplicacion.Modalidades;
 
 public sealed class EnvioExpressModalidad : IEnvioModalidad
@@ -7,6 +9,8 @@ public sealed class EnvioExpressModalidad : IEnvioModalidad
 
     public decimal CalcularCosto(decimal pesoKg, decimal distanciaKm)
     {
-        return 2000m + 350m * pesoKg + 20m * distanciaKm;
+        if (pesoKg <= 0) throw new ArgumentException("El peso debe ser mayor que cero.");
+        if (distanciaKm <= 0) throw new ArgumentException("La distancia debe ser mayor que cero.");
+        return 2000 + 350 * pesoKg + 20 * distanciaKm;
     }
 }

@@ -1,120 +1,115 @@
-using API;
+using Aplicacion.Interfaces;
 using Aplicacion.Modalidades;
+using Aplicacion.Servicios;
 using Persistencia;
 using Persistencia.Repositorios;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionFactory = MySqlConnectionFactory.DesdeVariablesEntorno();
-
-builder.Services.AddSingleton<IEnvioModalidad, EnvioEstandarModalidad>();
-builder.Services.AddSingleton<IEnvioModalidad, EnvioExpressModalidad>();
-builder.Services.AddSingleton<IDbConnectionFactory>(connectionFactory);
-builder.Services.AddSingleton<IEnvioApiRepository, EnvioRepository>();
-builder.Services.AddSingleton<ApiEnvioService>();
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<IEnvioModalidad, EnvioEstandarModalidad>();
+builder.Services.AddScoped<IEnvioModalidad, EnvioExpressModalidad>();
+builder.Services.AddScoped<EnvioService>();
+builder.Services.AddScoped<EnvioRepository>();
+
+// Conexión a la base de datos
+builder.Services.AddScoped<IDbConnectionFactory>(prov => 
+    new MySqlConnectionFactory(builder.Configuration.GetConnectionString("Default")!)
+);
+
+// ✅ Cambiamos los puertos para no chocar
+builder.WebHost.UseUrls("http://localhost:5002", "https://localhost:7002");
+
+
 var app = builder.Build();
+
 app.UseSwagger();
 app.UseSwaggerUI();
-app.MapGet("/", () => Results.Redirect("/swagger"));
+app.UseHttpsRedirection();
+app.UseAuthorization();
 
-var envios = app.MapGroup("/api/envios");
-
-envios.MapPost("", (SolicitudEnvio solicitud, ApiEnvioService servicio) =>
+// 1. POST /api/envios — Crear
+app.MapPost("/api/envios", (CrearEnvioRequest req, EnvioService servicio) =>
 {
     try
     {
-        var envio = servicio.Crear(solicitud);
+        var envio = servicio.CrearEnvio(req.Modalidad, req.PesoKg, req.DistanciaKm, req.Destino);
         return Results.Created($"/api/envios/{envio.Id}", envio);
     }
-    catch (ArgumentException exception)
+    catch (ArgumentException ex)
     {
-        return Results.BadRequest(new ErrorResponse(exception.Message));
+        return Results.BadRequest(new { Mensaje = ex.Message });
     }
-})
-    .WithSummary("Crear un envío")
-    .WithDescription("Recibe modalidad (estandar o express), pesoKg, distanciaKm y destino.\n\n" +
-        "Válido: `{ \"modalidad\": \"estandar\", \"pesoKg\": 5, \"distanciaKm\": 10, \"destino\": \"Córdoba\" }`.\n\n" +
-        "Inválido: pesoKg igual a 0 o modalidad distinta de estandar/express.")
-    .Produces<Envio>(StatusCodes.Status201Created)
-    .Produces<ErrorResponse>(StatusCodes.Status400BadRequest);
+}).WithName("CrearEnvio");
 
-envios.MapGet("", (ApiEnvioService servicio) => Results.Ok(servicio.Listar()))
-    .WithSummary("Listar envíos")
-    .WithDescription("No recibe parámetros. Devuelve todos los envíos o una lista vacía.")
-    .Produces<IReadOnlyCollection<Envio>>(StatusCodes.Status200OK);
-
-envios.MapGet("/{id:int}", (int id, ApiEnvioService servicio) =>
+// 2. GET /api/envios — Listar
+app.MapGet("/api/envios", (EnvioService servicio) =>
 {
-    var envio = servicio.Buscar(id);
-    return envio is null ? Results.NotFound() : Results.Ok(envio);
-})
-    .WithSummary("Obtener un envío")
-    .WithDescription("Recibe el identificador entero del envío en la ruta.")
-    .Produces<Envio>(StatusCodes.Status200OK)
-    .Produces(StatusCodes.Status404NotFound);
+    return Results.Ok(servicio.ListarTodos());
+}).WithName("ListarEnvios");
 
-envios.MapGet("/{id:int}/cotizacion", (int id, ApiEnvioService servicio) =>
+// 3. GET /api/envios/{id} — Obtener por ID
+app.MapGet("/api/envios/{id:int}", (int id, EnvioService servicio) =>
 {
-    var envio = servicio.Buscar(id);
-    return envio is null
-        ? Results.NotFound()
-        : Results.Ok(new Cotizacion(envio.Costo, envio.DiasEstimados));
-})
-    .WithSummary("Consultar cotización")
-    .WithDescription("Recibe el identificador entero del envío en la ruta y devuelve costo y diasEstimados.")
-    .Produces<Cotizacion>(StatusCodes.Status200OK)
-    .Produces(StatusCodes.Status404NotFound);
+    var envio = servicio.BuscarPorId(id);
+    return envio is not null ? Results.Ok(envio) : Results.NotFound(new { Mensaje = $"No existe el envío {id}" });
+}).WithName("ObtenerEnvio");
 
-envios.MapPut("/{id:int}", (int id, SolicitudEnvio solicitud, ApiEnvioService servicio) =>
+// 4. GET /api/envios/{id}/cotizacion — Solo costo y días
+app.MapGet("/api/envios/{id:int}/cotizacion", (int id, EnvioService servicio) =>
 {
     try
     {
-        var envio = servicio.Actualizar(id, solicitud);
-        return envio is null ? Results.NotFound() : Results.Ok(envio);
+        var res = servicio.ObtenerCotizacion(id);
+        return Results.Ok(new { Costo = res.costo, DiasEstimados = res.diasEstimados });
     }
-    catch (ArgumentException exception)
+    catch (KeyNotFoundException)
     {
-        return Results.BadRequest(new ErrorResponse(exception.Message));
+        return Results.NotFound(new { Mensaje = $"No existe el envío {id}" });
     }
-})
-    .WithSummary("Reemplazar los datos de un envío")
-    .WithDescription("Recibe el identificador en la ruta y modalidad, pesoKg, distanciaKm y destino en el cuerpo. Conserva el ID y el estado.\n\n" +
-        "Válido: `{ \"modalidad\": \"express\", \"pesoKg\": 2, \"distanciaKm\": 20, \"destino\": \"Rosario\" }`.\n\n" +
-        "Inválido: `{ \"modalidad\": \"express\", \"pesoKg\": 0, \"distanciaKm\": 20, \"destino\": \"Rosario\" }` devuelve 400; un ID inexistente devuelve 404.")
-    .Produces<Envio>(StatusCodes.Status200OK)
-    .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
-    .Produces(StatusCodes.Status404NotFound);
+}).WithName("CotizarEnvio");
 
-envios.MapDelete("/{id:int}", (int id, ApiEnvioService servicio) =>
-    servicio.Eliminar(id) ? Results.NoContent() : Results.NotFound())
-    .WithSummary("Eliminar un envío")
-    .WithDescription("Recibe el identificador entero del envío en la ruta.\n\n" +
-        "Válido: `DELETE /api/envios/1` si existe.\n\n" +
-        "Inválido: `DELETE /api/envios/999` si no existe.")
-    .Produces(StatusCodes.Status204NoContent)
-    .Produces(StatusCodes.Status404NotFound);
-
-envios.MapPatch("/{id:int}/estado", (int id, SolicitudCambioEstado solicitud, ApiEnvioService servicio) =>
+// 5. PUT /api/envios/{id} — Actualizar
+app.MapPut("/api/envios/{id:int}", (int id, ActualizarEnvioRequest req, EnvioService servicio) =>
 {
     try
     {
-        var envio = servicio.CambiarEstado(id, solicitud.NuevoEstado);
-        return envio is null ? Results.NotFound() : Results.Ok(envio);
+        var act = servicio.Actualizar(id, req.Modalidad, req.PesoKg, req.DistanciaKm, req.Destino);
+        return Results.Ok(act);
     }
-    catch (ArgumentException exception)
+    catch (KeyNotFoundException)
     {
-        return Results.BadRequest(new ErrorResponse(exception.Message));
+        return Results.NotFound(new { Mensaje = $"No existe el envío {id}" });
     }
-})
-    .WithSummary("Avanzar el estado de un envío")
-    .WithDescription("Recibe el ID en la ruta y nuevoEstado en el cuerpo. Solo permite PENDIENTE a DESPACHADO y DESPACHADO a ENTREGADO.\n\n" +
-        "Válido: `{ \"nuevoEstado\": \"DESPACHADO\" }` para un envío PENDIENTE.\n\n" +
-        "Inválido: `{ \"nuevoEstado\": \"ENTREGADO\" }` para un envío PENDIENTE devuelve 400. Un ID inexistente devuelve 404.")
-    .Produces<Envio>(StatusCodes.Status200OK)
-    .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
-    .Produces(StatusCodes.Status404NotFound);
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(new { Mensaje = ex.Message });
+    }
+}).WithName("ActualizarEnvio");
+
+// 6. DELETE /api/envios/{id} — Eliminar
+app.MapDelete("/api/envios/{id:int}", (int id, EnvioService servicio) =>
+{
+    return servicio.Eliminar(id) ? Results.NoContent() : Results.NotFound(new { Mensaje = $"No existe el envío {id}" });
+}).WithName("EliminarEnvio");
 
 app.Run();
+
+public class CrearEnvioRequest
+{
+    public string Modalidad { get; set; } = string.Empty;
+    public decimal PesoKg { get; set; }
+    public decimal DistanciaKm { get; set; }
+    public string Destino { get; set; } = string.Empty;
+}
+
+public class ActualizarEnvioRequest
+{
+    public string Modalidad { get; set; } = string.Empty;
+    public decimal PesoKg { get; set; }
+    public decimal DistanciaKm { get; set; }
+    public string Destino { get; set; } = string.Empty;
+}

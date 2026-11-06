@@ -3,7 +3,7 @@ using Persistencia.Entidades;
 
 namespace Persistencia.Repositorios;
 
-public class EnvioRepository : IEnvioApiRepository
+public class EnvioRepository
 {
     private readonly IDbConnectionFactory _connectionFactory;
 
@@ -12,88 +12,44 @@ public class EnvioRepository : IEnvioApiRepository
         _connectionFactory = connectionFactory;
     }
 
-    public IEnumerable<T> ConsultarInvitado<T>(
-        string sql,
-        object? parametros = null)
-    {
-        using var conexion = _connectionFactory.CrearConexionInvitado();
-
-        return conexion.Query<T>(sql, parametros);
-    }
-
-    public T ConsultarPrimeroInvitado<T>(
-        string sql,
-        object parametros)
-    {
-        using var conexion = _connectionFactory.CrearConexionInvitado();
-
-        return conexion.QueryFirst<T>(sql, parametros);
-    }
-
-    public int EjecutarAdministrador(string sql, object parametros)
-    {
-        using var conexion =
-            _connectionFactory.CrearConexionAdministrador();
-
-        return conexion.Execute(sql, parametros);
-    }
-
-    public int Crear(EnvioApiRecord envio)
+    public int Crear(Envio envio)
     {
         using var conexion = _connectionFactory.CrearConexionAdministrador();
-        conexion.Execute(
+        return conexion.QuerySingle<int>(
             """
-            INSERT INTO EnvioApi (Modalidad, PesoKg, DistanciaKm, Destino, Estado)
-            VALUES (@Modalidad, @PesoKg, @DistanciaKm, @Destino, @Estado);
-            """,
-            envio);
-
-        return conexion.QuerySingle<int>("SELECT LAST_INSERT_ID();");
+            INSERT INTO Envio (Modalidad, PesoKg, DistanciaKm, Destino, Costo, DiasEstimados, Estado)
+            VALUES (@Modalidad, @PesoKg, @DistanciaKm, @Destino, @Costo, @DiasEstimados, @Estado);
+            SELECT LAST_INSERT_ID();
+            """, envio);
     }
 
-    public IEnumerable<EnvioApiRecord> Listar()
+    public List<Envio> Listar()
     {
         using var conexion = _connectionFactory.CrearConexionInvitado();
-        return conexion.Query<EnvioApiRecord>(
-            "SELECT Id, Modalidad, PesoKg, DistanciaKm, Destino, Estado FROM EnvioApi ORDER BY Id;");
+        return conexion.Query<Envio>("SELECT * FROM Envio ORDER BY Id DESC").ToList();
     }
 
-    public EnvioApiRecord? Buscar(int id)
+    public Envio? Buscar(int id)
     {
         using var conexion = _connectionFactory.CrearConexionInvitado();
-        return conexion.QuerySingleOrDefault<EnvioApiRecord>(
-            "SELECT Id, Modalidad, PesoKg, DistanciaKm, Destino, Estado FROM EnvioApi WHERE Id = @Id;",
-            new { Id = id });
+        return conexion.QuerySingleOrDefault<Envio>("SELECT * FROM Envio WHERE Id = @Id", new { Id = id });
     }
 
-    public bool Actualizar(EnvioApiRecord envio)
+    public bool Actualizar(Envio envio)
     {
         using var conexion = _connectionFactory.CrearConexionAdministrador();
         return conexion.Execute(
             """
-            UPDATE EnvioApi
-            SET Modalidad = @Modalidad,
-                PesoKg = @PesoKg,
-                DistanciaKm = @DistanciaKm,
-                Destino = @Destino
-            WHERE Id = @Id;
-            """,
-            envio) > 0;
-    }
-
-    public bool CambiarEstado(int id, string estadoActual, string estadoNuevo)
-    {
-        using var conexion = _connectionFactory.CrearConexionAdministrador();
-        return conexion.Execute(
-            "UPDATE EnvioApi SET Estado = @EstadoNuevo WHERE Id = @Id AND Estado = @EstadoActual;",
-            new { Id = id, EstadoActual = estadoActual, EstadoNuevo = estadoNuevo }) > 0;
+            UPDATE Envio SET
+                Modalidad = @Modalidad, PesoKg = @PesoKg, DistanciaKm = @DistanciaKm,
+                Destino = @Destino, Costo = @Costo, DiasEstimados = @DiasEstimados
+            WHERE Id = @Id
+            """, envio) > 0;
     }
 
     public bool Eliminar(int id)
     {
         using var conexion = _connectionFactory.CrearConexionAdministrador();
-        return conexion.Execute(
-            "DELETE FROM EnvioApi WHERE Id = @Id;",
-            new { Id = id }) > 0;
+        return conexion.Execute("DELETE FROM Envio WHERE Id = @Id", new { Id = id }) > 0;
     }
 }

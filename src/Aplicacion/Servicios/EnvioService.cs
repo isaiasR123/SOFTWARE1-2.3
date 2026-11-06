@@ -1,170 +1,76 @@
-using Dapper;
-using Persistencia;
-using Persistencia.Repositorios;
-using System.Data;
+using Aplicacion.Interfaces;
 using Persistencia.Entidades;
+using Persistencia.Repositorios;
 
 namespace Aplicacion.Servicios;
 
 public class EnvioService
 {
-    private readonly EnvioRepository _envioRepository;
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly EnvioRepository _repositorio;
+    private readonly Dictionary<string, IEnvioModalidad> _modalidades;
 
-    public EnvioService(
-        EnvioRepository envioRepository,
-        IDbConnectionFactory connectionFactory)
+    public EnvioService(EnvioRepository repositorio, IEnumerable<IEnvioModalidad> modalidades)
     {
-        _envioRepository = envioRepository;
-        _connectionFactory = connectionFactory;
+        _repositorio = repositorio;
+        _modalidades = modalidades.ToDictionary(m => m.Nombre);
     }
 
-    // ==========================================
-    // REGISTRAR ENVÍO
-    // ==========================================
-
-    public void RegistrarEnvio(Envio envio)
+    public Envio CrearEnvio(string modalidadNombre, decimal pesoKg, decimal distanciaKm, string destino)
     {
-        if (envio == null)
-            throw new ArgumentException("El envío es obligatorio.");
+        if (!_modalidades.TryGetValue(modalidadNombre.ToLower(), out var modalidad))
+            throw new ArgumentException($"Modalidad inválida: {modalidadNombre}");
+        if (pesoKg <= 0) throw new ArgumentException("El peso debe ser mayor que cero.");
+        if (distanciaKm <= 0) throw new ArgumentException("La distancia debe ser mayor que cero.");
+        if (string.IsNullOrWhiteSpace(destino)) throw new ArgumentException("El destino es obligatorio.");
 
-        int idModalidad;
+        var costo = modalidad.CalcularCosto(pesoKg, distanciaKm);
 
-        if (envio is EnvioEstandar)
+        var envio = new Envio
         {
-            idModalidad = 1;
-        }
-        else if (envio is EnvioExpress)
-        {
-            idModalidad = 2;
-        }
-        else if (envio is EnvioPrioritario)
-        {
-            idModalidad = 3;
-        }
-        else
-        {
-            throw new ArgumentException("El tipo de envío no es válido.");
-        }
+            Modalidad = modalidadNombre.ToLower(),
+            PesoKg = pesoKg,
+            DistanciaKm = distanciaKm,
+            Destino = destino,
+            Costo = costo,
+            DiasEstimados = modalidad.DiasEstimados,
+            Estado = "PENDIENTE"
+        };
 
-        double costo = envio.CalcularCosto();
-
-        double tiempoEstimado =
-            envio.CalcularTiempoEntrega();
-
-        using var conexion =
-            _connectionFactory.CrearConexionAdministrador();
-
-        conexion.Execute(
-            "RegistrarEnvioCompleto",
-            new
-            {
-                p_IdCliente = envio.Cliente.Id,
-                p_IdPaquete = envio.Paquete.Id,
-                p_IdModalidad = idModalidad,
-                p_IdDireccionOrigen = envio.DireccionOrigen.Id,
-                p_IdDireccionDestino = envio.DireccionDestino.Id,
-                p_Distancia = envio.Distancia,
-                p_Costo = costo,
-                p_TiempoEstimado = tiempoEstimado
-            },
-            commandType: CommandType.StoredProcedure);
+        envio.Id = _repositorio.Crear(envio);
+        return envio;
     }
 
-    // ==========================================
-    // RECUPERAR / LISTAR ENVÍOS
-    // ==========================================
+    public List<Envio> ListarTodos() => _repositorio.Listar();
+    public Envio? BuscarPorId(int id) => _repositorio.Buscar(id);
 
-    public IEnumerable<dynamic> ListarEnvios()
+    public (decimal costo, int diasEstimados) ObtenerCotizacion(int id)
     {
-        return _envioRepository.ConsultarInvitado<dynamic>(
-            "SELECT * FROM Envio");
+        var envio = _repositorio.Buscar(id) ?? throw new KeyNotFoundException($"No existe el envío {id}");
+        if (!_modalidades.TryGetValue(envio.Modalidad, out var modalidad))
+            throw new InvalidOperationException($"Modalidad desconocida: {envio.Modalidad}");
+        return (modalidad.CalcularCosto(envio.PesoKg, envio.DistanciaKm), modalidad.DiasEstimados);
     }
 
-    // ==========================================
-    // BUSCAR ENVÍO
-    // ==========================================
-
-    public dynamic BuscarEnvio(int idEnvio)
+    public Envio Actualizar(int id, string modalidadNombre, decimal pesoKg, decimal distanciaKm, string destino)
     {
-        if (idEnvio <= 0)
-            throw new ArgumentException("El ID del envío no es válido.");
+        var envio = _repositorio.Buscar(id) ?? throw new KeyNotFoundException($"No existe el envío {id}");
+        if (!_modalidades.TryGetValue(modalidadNombre.ToLower(), out var modalidad))
+            throw new ArgumentException($"Modalidad inválida: {modalidadNombre}");
+        if (pesoKg <= 0) throw new ArgumentException("El peso debe ser mayor que cero.");
+        if (distanciaKm <= 0) throw new ArgumentException("La distancia debe ser mayor que cero.");
+        if (string.IsNullOrWhiteSpace(destino)) throw new ArgumentException("El destino es obligatorio.");
 
-        return _envioRepository.ConsultarPrimeroInvitado<dynamic>(
-            "SELECT * FROM Envio WHERE IdEnvio = @IdEnvio",
-            new { IdEnvio = idEnvio });
+        envio.Modalidad = modalidadNombre.ToLower();
+        envio.PesoKg = pesoKg;
+        envio.DistanciaKm = distanciaKm;
+        envio.Destino = destino;
+        envio.Costo = modalidad.CalcularCosto(pesoKg, distanciaKm);
+        envio.DiasEstimados = modalidad.DiasEstimados;
+        // Id y Estado se conservan
+
+        _repositorio.Actualizar(envio);
+        return envio;
     }
 
-    // ==========================================
-    // CAMBIAR ESTADO
-    // ==========================================
-
-    public void CambiarEstado(
-        int idEnvio,
-        int idEstadoNuevo)
-    {
-        if (idEnvio <= 0)
-            throw new ArgumentException("El ID del envío no es válido.");
-
-        if (idEstadoNuevo <= 0)
-            throw new ArgumentException("El estado no es válido.");
-
-        using var conexion =
-            _connectionFactory.CrearConexionAdministrador();
-
-        conexion.Execute(
-            "ActualizarEstadoEnvio",
-            new
-            {
-                p_IdEnvio = idEnvio,
-                p_IdEstadoNuevo = idEstadoNuevo
-            },
-            commandType: CommandType.StoredProcedure);
-    }
-
-    // ==========================================
-    // CANCELAR ENVÍO
-    // ==========================================
-
-    public void CancelarEnvio(int idEnvio)
-    {
-        if (idEnvio <= 0)
-            throw new ArgumentException("El ID del envío no es válido.");
-
-        using var conexion =
-            _connectionFactory.CrearConexionAdministrador();
-
-        conexion.Execute(
-            "CancelarEnvio",
-            new
-            {
-                p_IdEnvio = idEnvio
-            },
-            commandType: CommandType.StoredProcedure);
-    }
-
-    // ==========================================
-    // HISTORIAL DE ESTADOS
-    // ==========================================
-
-    public IEnumerable<dynamic> ConsultarHistorial(int idEnvio)
-    {
-        if (idEnvio <= 0)
-            throw new ArgumentException("El ID del envío no es válido.");
-
-        return _envioRepository.ConsultarInvitado<dynamic>(
-            """
-            SELECT
-                h.IdHistorial,
-                h.IdEnvio,
-                e.Nombre AS Estado,
-                h.FechaCambio
-            FROM HistorialEstado h
-            INNER JOIN Estado e
-                ON h.IdEstado = e.IdEstado
-            WHERE h.IdEnvio = @IdEnvio
-            ORDER BY h.FechaCambio;
-            """,
-            new { IdEnvio = idEnvio });
-    }
+    public bool Eliminar(int id) => _repositorio.Eliminar(id);
 }
