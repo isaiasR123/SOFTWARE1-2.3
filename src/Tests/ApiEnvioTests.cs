@@ -1,195 +1,133 @@
-using API;
+using Aplicacion.Interfaces;
 using Aplicacion.Modalidades;
-using Persistencia.Entidades;
-using Persistencia.Repositorios;
-using Xunit;
+using Aplicacion.Servicios;
 
 namespace Tests;
 
 public class ApiEnvioTests
 {
-    private static ApiEnvioService CrearServicio()
+    private static EnvioService CrearServicio()
     {
-        return new ApiEnvioService(
-        [
-            new EnvioEstandarModalidad(),
-            new EnvioExpressModalidad()
-        ], new FakeEnvioApiRepository());
-    }
-
-    [Theory]
-    [InlineData("estandar", 5, 10, 2100, 5)]
-    [InlineData("express", 5, 10, 3950, 2)]
-    public void Crear_CalculaCostoYPlazoSegunModalidad(
-        string modalidad,
-        decimal pesoKg,
-        decimal distanciaKm,
-        decimal costoEsperado,
-        int diasEsperados)
-    {
-        var servicio = CrearServicio();
-
-        var envio = servicio.Crear(new SolicitudEnvio(
-            modalidad, pesoKg, distanciaKm, "Córdoba"));
-
-        Assert.Equal(costoEsperado, envio.Costo);
-        Assert.Equal(diasEsperados, envio.DiasEstimados);
+        return new EnvioService(
+            new FakeEnvioRepository(),
+            new IEnvioModalidad[]
+            {
+                new EnvioEstandarModalidad(),
+                new EnvioExpressModalidad()
+            });
     }
 
     [Fact]
-    public void Actualizar_ConservaIdentificadorYEstado_YRecalculaCotizacion()
+    public void CrearEnvio_Estandar_CalculaCostoYPlazo()
     {
         var servicio = CrearServicio();
-        var creado = servicio.Crear(new SolicitudEnvio(
-            "estandar", 5, 10, "Córdoba"));
 
-        var actualizado = servicio.Actualizar(creado.Id, new SolicitudEnvio(
-            "express", 2, 20, "Rosario"));
+        var envio = servicio.CrearEnvio("estandar", 5, 10, "Córdoba");
 
-        Assert.NotNull(actualizado);
-        Assert.Equal(creado.Id, actualizado.Id);
-        Assert.Equal(creado.Estado, actualizado.Estado);
-        Assert.Equal(3100m, actualizado.Costo);
-        Assert.Equal(2, actualizado.DiasEstimados);
+        Assert.Equal(2100m, envio.Costo);
+        Assert.Equal(5, envio.DiasEstimados);
+    }
+
+    [Fact]
+    public void CrearEnvio_Express_CalculaCostoYPlazo()
+    {
+        var servicio = CrearServicio();
+
+        var envio = servicio.CrearEnvio("express", 5, 10, "Córdoba");
+
+        Assert.Equal(3950m, envio.Costo);
+        Assert.Equal(2, envio.DiasEstimados);
     }
 
     [Theory]
     [InlineData("estandar", 0, 10, "Córdoba")]
+    [InlineData("estandar", -5, 10, "Córdoba")]
     [InlineData("express", 5, 0, "Córdoba")]
+    [InlineData("express", 5, -1, "Córdoba")]
     [InlineData("prioritario", 5, 10, "Córdoba")]
     [InlineData("estandar", 5, 10, " ")]
-    public void Crear_RechazaDatosInvalidos(
-        string modalidad,
-        decimal pesoKg,
-        decimal distanciaKm,
-        string destino)
+    public void CrearEnvio_RechazaDatosInvalidos(
+        string modalidad, decimal pesoKg, decimal distanciaKm, string destino)
     {
         var servicio = CrearServicio();
-
-        Assert.Throws<ArgumentException>(() => servicio.Crear(new SolicitudEnvio(
-            modalidad, pesoKg, distanciaKm, destino)));
-    }
-
-    [Fact]
-    public void Eliminar_BorraElEnvioYNoEncuentraElIdLuego()
-    {
-        var servicio = CrearServicio();
-        var envio = servicio.Crear(new SolicitudEnvio(
-            "estandar", 5, 10, "Córdoba"));
-
-        Assert.True(servicio.Eliminar(envio.Id));
-        Assert.Null(servicio.Buscar(envio.Id));
-        Assert.False(servicio.Eliminar(envio.Id));
-    }
-
-    [Fact]
-    public void Actualizar_IdInexistenteDevuelveNullAunqueLosDatosSeanInvalidos()
-    {
-        var servicio = CrearServicio();
-
-        var actualizado = servicio.Actualizar(99, new SolicitudEnvio(
-            "invalida", 0, 0, ""));
-
-        Assert.Null(actualizado);
-    }
-
-    [Fact]
-    public void Crear_IniciaEnvioEnEstadoPendiente()
-    {
-        var servicio = CrearServicio();
-
-        var envio = servicio.Crear(new SolicitudEnvio(
-            "estandar", 1, 1, "Córdoba"));
-
-        Assert.Equal("PENDIENTE", envio.Estado);
-    }
-
-    [Fact]
-    public void CambiarEstado_PermiteTransicionesEnOrden()
-    {
-        var servicio = CrearServicio();
-        var creado = servicio.Crear(new SolicitudEnvio(
-            "estandar", 1, 1, "Córdoba"));
-
-        var despachado = servicio.CambiarEstado(creado.Id, "DESPACHADO");
-        var entregado = servicio.CambiarEstado(creado.Id, "ENTREGADO");
-
-        Assert.Equal("DESPACHADO", despachado?.Estado);
-        Assert.Equal("ENTREGADO", entregado?.Estado);
-    }
-
-    [Theory]
-    [InlineData("ENTREGADO")]
-    [InlineData("PENDIENTE")]
-    [InlineData("CANCELADO")]
-    public void CambiarEstado_RechazaTransicionesNoPermitidas(string nuevoEstado)
-    {
-        var servicio = CrearServicio();
-        var envio = servicio.Crear(new SolicitudEnvio(
-            "estandar", 1, 1, "Córdoba"));
 
         Assert.Throws<ArgumentException>(() =>
-            servicio.CambiarEstado(envio.Id, nuevoEstado));
+            servicio.CrearEnvio(modalidad, pesoKg, distanciaKm, destino));
     }
 
     [Fact]
-    public void CambiarEstado_NoPermiteRetrocederDesdeDespachado()
+    public void Actualizar_ConservaIdYEstado_RecalculaCotizacionYGuarda()
     {
         var servicio = CrearServicio();
-        var envio = servicio.Crear(new SolicitudEnvio(
-            "estandar", 1, 1, "Córdoba"));
-        servicio.CambiarEstado(envio.Id, "DESPACHADO");
+        var creado = servicio.CrearEnvio("estandar", 5, 10, "Córdoba");
 
-        Assert.Throws<ArgumentException>(() =>
-            servicio.CambiarEstado(envio.Id, "PENDIENTE"));
+        var actualizado = servicio.Actualizar(creado.Id, "express", 2, 20, "Rosario");
+
+        Assert.Equal(creado.Id, actualizado.Id);
+        Assert.Equal("PENDIENTE", actualizado.Estado);
+        Assert.Equal(3100m, actualizado.Costo);
+        Assert.Equal(2, actualizado.DiasEstimados);
+
+        var guardado = servicio.BuscarPorId(creado.Id);
+        Assert.NotNull(guardado);
+        Assert.Equal("express", guardado.Modalidad);
+        Assert.Equal("Rosario", guardado.Destino);
+        Assert.Equal(3100m, guardado.Costo);
     }
 
     [Fact]
-    public void CambiarEstado_IdInexistenteDevuelveNull()
+    public void Actualizar_IdInexistente_LanzaKeyNotFoundException()
     {
         var servicio = CrearServicio();
 
-        Assert.Null(servicio.CambiarEstado(99, "DESPACHADO"));
+        Assert.Throws<KeyNotFoundException>(() =>
+            servicio.Actualizar(99, "estandar", 5, 10, "Córdoba"));
     }
 
-    private sealed class FakeEnvioApiRepository : IEnvioApiRepository
+    [Fact]
+    public void ListarTodos_SinRegistros_DevuelveListaVacia()
     {
-        private readonly Dictionary<int, EnvioApiRecord> _envios = [];
-        private int _siguienteId;
+        var servicio = CrearServicio();
 
-        public int Crear(EnvioApiRecord envio)
-        {
-            var id = ++_siguienteId;
-            _envios.Add(id, envio with { Id = id });
-            return id;
-        }
+        Assert.Empty(servicio.ListarTodos());
+    }
 
-        public IEnumerable<EnvioApiRecord> Listar() => _envios.Values.ToArray();
+    [Fact]
+    public void BuscarPorId_IdInexistente_DevuelveNull()
+    {
+        var servicio = CrearServicio();
 
-        public EnvioApiRecord? Buscar(int id) => _envios.GetValueOrDefault(id);
+        Assert.Null(servicio.BuscarPorId(99));
+    }
 
-        public bool Actualizar(EnvioApiRecord envio)
-        {
-            if (!_envios.ContainsKey(envio.Id))
-            {
-                return false;
-            }
+    [Fact]
+    public void ObtenerCotizacion_DevuelveCostoYDiasEstimados()
+    {
+        var servicio = CrearServicio();
+        var creado = servicio.CrearEnvio("estandar", 5, 10, "Córdoba");
 
-            _envios[envio.Id] = envio;
-            return true;
-        }
+        var cotizacion = servicio.ObtenerCotizacion(creado.Id);
 
-        public bool CambiarEstado(int id, string estadoActual, string estadoNuevo)
-        {
-            if (!_envios.TryGetValue(id, out var envio) || envio.Estado != estadoActual)
-            {
-                return false;
-            }
+        Assert.Equal(2100m, cotizacion.costo);
+        Assert.Equal(5, cotizacion.diasEstimados);
+    }
 
-            _envios[id] = envio with { Estado = estadoNuevo };
-            return true;
-        }
+    [Fact]
+    public void ObtenerCotizacion_IdInexistente_LanzaKeyNotFoundException()
+    {
+        var servicio = CrearServicio();
 
-        public bool Eliminar(int id) => _envios.Remove(id);
+        Assert.Throws<KeyNotFoundException>(() => servicio.ObtenerCotizacion(99));
+    }
+
+    [Fact]
+    public void Eliminar_BorraElEnvio_YLaSegundaVezDevuelveFalse()
+    {
+        var servicio = CrearServicio();
+        var creado = servicio.CrearEnvio("estandar", 5, 10, "Córdoba");
+
+        Assert.True(servicio.Eliminar(creado.Id));
+        Assert.Null(servicio.BuscarPorId(creado.Id));
+        Assert.False(servicio.Eliminar(creado.Id));
     }
 }

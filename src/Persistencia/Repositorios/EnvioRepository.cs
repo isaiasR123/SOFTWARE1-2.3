@@ -3,7 +3,7 @@ using Persistencia.Entidades;
 
 namespace Persistencia.Repositorios;
 
-public class EnvioRepository
+public class EnvioRepository : IEnvioRepository
 {
     private readonly IDbConnectionFactory _connectionFactory;
 

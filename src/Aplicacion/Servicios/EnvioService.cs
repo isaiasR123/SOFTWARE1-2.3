@@ -4,12 +4,13 @@ using Persistencia.Repositorios;
 
 namespace Aplicacion.Servicios;
 
-public class EnvioService
+
+    public class EnvioService
 {
-    private readonly EnvioRepository _repositorio;
+    private readonly IEnvioRepository _repositorio;
     private readonly Dictionary<string, IEnvioModalidad> _modalidades;
 
-    public EnvioService(EnvioRepository repositorio, IEnumerable<IEnvioModalidad> modalidades)
+    public EnvioService(IEnvioRepository repositorio, IEnumerable<IEnvioModalidad> modalidades)
     {
         _repositorio = repositorio;
         _modalidades = modalidades.ToDictionary(m => m.Nombre);

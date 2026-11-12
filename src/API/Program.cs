@@ -6,15 +6,13 @@ using Persistencia.Repositorios;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IEnvioModalidad, EnvioEstandarModalidad>();
 builder.Services.AddScoped<IEnvioModalidad, EnvioExpressModalidad>();
 builder.Services.AddScoped<EnvioService>();
-builder.Services.AddScoped<EnvioRepository>();
-
+builder.Services.AddScoped<IEnvioRepository, EnvioRepository>();
 // Conexión a la base de datos
 builder.Services.AddScoped<IDbConnectionFactory>(prov => 
     new MySqlConnectionFactory(builder.Configuration.GetConnectionString("Default")!)
@@ -29,7 +27,6 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
-app.UseAuthorization();
 
 // 1. POST /api/envios — Crear
 app.MapPost("/api/envios", (CrearEnvioRequest req, EnvioService servicio) =>
