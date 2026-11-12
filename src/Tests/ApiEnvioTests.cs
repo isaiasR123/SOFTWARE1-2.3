@@ -130,4 +130,86 @@ public class ApiEnvioTests
         Assert.Null(servicio.BuscarPorId(creado.Id));
         Assert.False(servicio.Eliminar(creado.Id));
     }
+
+        [Fact]
+    public void CrearEnvio_IniciaEnEstadoPendiente()
+    {
+        var servicio = CrearServicio();
+
+        var envio = servicio.CrearEnvio("estandar", 1, 1, "Córdoba");
+
+        Assert.Equal("PENDIENTE", envio.Estado);
+    }
+
+    [Fact]
+    public void CambiarEstado_PermiteLasTransicionesEnOrden_YLasGuarda()
+    {
+        var servicio = CrearServicio();
+        var creado = servicio.CrearEnvio("estandar", 1, 1, "Córdoba");
+
+        var despachado = servicio.CambiarEstado(creado.Id, "DESPACHADO");
+        Assert.Equal("DESPACHADO", despachado.Estado);
+        Assert.Equal("DESPACHADO", servicio.BuscarPorId(creado.Id)!.Estado);
+
+        var entregado = servicio.CambiarEstado(creado.Id, "ENTREGADO");
+        Assert.Equal("ENTREGADO", entregado.Estado);
+        Assert.Equal("ENTREGADO", servicio.BuscarPorId(creado.Id)!.Estado);
+    }
+
+    [Theory]
+    [InlineData("ENTREGADO")]
+    [InlineData("PENDIENTE")]
+    [InlineData("CANCELADO")]
+    [InlineData(" ")]
+    public void CambiarEstado_DesdePendiente_RechazaTransicionesNoPermitidas(string nuevoEstado)
+    {
+        var servicio = CrearServicio();
+        var envio = servicio.CrearEnvio("estandar", 1, 1, "Córdoba");
+
+        Assert.Throws<ArgumentException>(() =>
+            servicio.CambiarEstado(envio.Id, nuevoEstado));
+    }
+
+    [Fact]
+    public void CambiarEstado_NoPermiteRetrocederDesdeDespachado()
+    {
+        var servicio = CrearServicio();
+        var envio = servicio.CrearEnvio("estandar", 1, 1, "Córdoba");
+        servicio.CambiarEstado(envio.Id, "DESPACHADO");
+
+        Assert.Throws<ArgumentException>(() =>
+            servicio.CambiarEstado(envio.Id, "PENDIENTE"));
+    }
+
+    [Fact]
+    public void CambiarEstado_DesdeEntregado_NoPermiteNingunCambio()
+    {
+        var servicio = CrearServicio();
+        var envio = servicio.CrearEnvio("estandar", 1, 1, "Córdoba");
+        servicio.CambiarEstado(envio.Id, "DESPACHADO");
+        servicio.CambiarEstado(envio.Id, "ENTREGADO");
+
+        Assert.Throws<ArgumentException>(() =>
+            servicio.CambiarEstado(envio.Id, "DESPACHADO"));
+    }
+
+    [Fact]
+    public void CambiarEstado_AceptaMinusculas()
+    {
+        var servicio = CrearServicio();
+        var envio = servicio.CrearEnvio("estandar", 1, 1, "Córdoba");
+
+        var despachado = servicio.CambiarEstado(envio.Id, "despachado");
+
+        Assert.Equal("DESPACHADO", despachado.Estado);
+    }
+
+    [Fact]
+    public void CambiarEstado_IdInexistente_LanzaKeyNotFoundException()
+    {
+        var servicio = CrearServicio();
+
+        Assert.Throws<KeyNotFoundException>(() =>
+            servicio.CambiarEstado(99, "DESPACHADO"));
+    }
 }

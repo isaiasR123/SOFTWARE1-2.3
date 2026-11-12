@@ -4,11 +4,16 @@ using Persistencia.Repositorios;
 
 namespace Aplicacion.Servicios;
 
-
-    public class EnvioService
+public class EnvioService
 {
     private readonly IEnvioRepository _repositorio;
     private readonly Dictionary<string, IEnvioModalidad> _modalidades;
+
+    private static readonly Dictionary<string, string> _transiciones = new()
+    {
+        ["PENDIENTE"] = "DESPACHADO",
+        ["DESPACHADO"] = "ENTREGADO"
+    };
 
     public EnvioService(IEnvioRepository repositorio, IEnumerable<IEnvioModalidad> modalidades)
     {
@@ -69,6 +74,19 @@ namespace Aplicacion.Servicios;
         envio.DiasEstimados = modalidad.DiasEstimados;
         // Id y Estado se conservan
 
+        _repositorio.Actualizar(envio);
+        return envio;
+    }
+
+    public Envio CambiarEstado(int id, string nuevoEstado)
+    {
+        var envio = _repositorio.Buscar(id) ?? throw new KeyNotFoundException($"No existe el envío {id}");
+
+        var estadoNuevo = (nuevoEstado ?? string.Empty).Trim().ToUpper();
+        if (!_transiciones.TryGetValue(envio.Estado, out var permitido) || permitido != estadoNuevo)
+            throw new ArgumentException($"No se puede pasar de {envio.Estado} a {nuevoEstado}.");
+
+        envio.Estado = estadoNuevo;
         _repositorio.Actualizar(envio);
         return envio;
     }

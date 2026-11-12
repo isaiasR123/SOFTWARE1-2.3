@@ -93,6 +93,24 @@ app.MapDelete("/api/envios/{id:int}", (int id, EnvioService servicio) =>
     return servicio.Eliminar(id) ? Results.NoContent() : Results.NotFound(new { Mensaje = $"No existe el envío {id}" });
 }).WithName("EliminarEnvio");
 
+// 7. PATCH /api/envios/{id}/estado — Cambiar estado
+app.MapPatch("/api/envios/{id:int}/estado", (int id, CambiarEstadoRequest req, EnvioService servicio) =>
+{
+    try
+    {
+        var envio = servicio.CambiarEstado(id, req.Estado);
+        return Results.Ok(envio);
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound(new { Mensaje = $"No existe el envío {id}" });
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(new { Mensaje = ex.Message });
+    }
+}).WithName("CambiarEstadoEnvio");
+
 app.Run();
 
 public class CrearEnvioRequest
@@ -109,4 +127,9 @@ public class ActualizarEnvioRequest
     public decimal PesoKg { get; set; }
     public decimal DistanciaKm { get; set; }
     public string Destino { get; set; } = string.Empty;
+}
+
+public class CambiarEstadoRequest
+{
+    public string Estado { get; set; } = string.Empty;
 }

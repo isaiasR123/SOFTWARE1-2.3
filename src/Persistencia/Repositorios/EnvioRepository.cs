@@ -39,10 +39,11 @@ public class EnvioRepository : IEnvioRepository
     {
         using var conexion = _connectionFactory.CrearConexionAdministrador();
         return conexion.Execute(
-            """
+                       """
             UPDATE Envio SET
                 Modalidad = @Modalidad, PesoKg = @PesoKg, DistanciaKm = @DistanciaKm,
-                Destino = @Destino, Costo = @Costo, DiasEstimados = @DiasEstimados
+                Destino = @Destino, Costo = @Costo, DiasEstimados = @DiasEstimados,
+                Estado = @Estado
             WHERE Id = @Id
             """, envio) > 0;
     }
