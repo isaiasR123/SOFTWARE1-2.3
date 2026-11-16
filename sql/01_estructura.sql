@@ -1,0 +1,15 @@
+CREATE DATABASE IF NOT EXISTS logistica_db;
+USE logistica_db;
+
+DROP TABLE IF EXISTS Envio;
+
+CREATE TABLE Envio (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Modalidad VARCHAR(50) NOT NULL,
+    PesoKg DECIMAL(10, 2) NOT NULL,
+    DistanciaKm DECIMAL(10, 2) NOT NULL,
+    Destino VARCHAR(255) NOT NULL,
+    Costo DECIMAL(10, 2) NOT NULL,
+    DiasEstimados INT NOT NULL,
+    Estado VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE'
+);
