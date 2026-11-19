@@ -46,4 +46,5 @@ CREATE TABLE IF NOT EXISTS Envio (
 
 INSERT INTO Envio (Id, Modalidad, PesoKg, DistanciaKm, Destino, Costo, DiasEstimados, Estado) VALUES
 (1, 'estandar', 10.00, 50.00, 'La Plata', 3500.00, 5, 'PENDIENTE'),
-(2, 'express', 5.00, 100.00, 'Buenos Aires', 5000.00, 2, 'DESPACHADO');
+(2, 'express', 5.00, 100.00, 'Buenos Aires', 5750.00, 2, 'DESPACHADO');
+

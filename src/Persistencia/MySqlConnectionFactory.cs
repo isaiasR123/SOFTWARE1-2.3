@@ -5,24 +5,25 @@ namespace Persistencia;
 
 public class MySqlConnectionFactory : IDbConnectionFactory
 {
-    private readonly string _cadenaConexion;
+    private readonly string _cadenaAdmin;
+    private readonly string _cadenaInvitado;
 
-    // Recibimos la cadena directamente, sin IConfiguration
-    public MySqlConnectionFactory(string cadenaConexion)
+    public MySqlConnectionFactory(string cadenaAdmin, string cadenaInvitado)
     {
-        _cadenaConexion = cadenaConexion;
+        _cadenaAdmin = cadenaAdmin;
+        _cadenaInvitado = cadenaInvitado;
     }
 
     public IDbConnection CrearConexionAdministrador()
     {
-        var conexion = new MySqlConnection(_cadenaConexion);
+        var conexion = new MySqlConnection(_cadenaAdmin);
         conexion.Open();
         return conexion;
     }
 
     public IDbConnection CrearConexionInvitado()
     {
-        var conexion = new MySqlConnection(_cadenaConexion);
+        var conexion = new MySqlConnection(_cadenaInvitado);
         conexion.Open();
         return conexion;
     }

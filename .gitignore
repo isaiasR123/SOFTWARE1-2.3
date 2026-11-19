@@ -13,3 +13,10 @@
 .env
 .env.*
 scripts/Usuarios.local.sql
+
+# Credenciales locales (NO subir contraseñas reales a GitHub)
+appsettings.Local.json
+*.local.json
+
+# Carpeta de respaldo local con credenciales
+.env
