@@ -1,0 +1,63 @@
+@baseUrl = http://localhost:5095
+
+### ✅ CREAR envío estándar — Válido
+POST {{baseUrl}}/api/envios
+Content-Type: application/json
+
+{
+  "Modalidad": "estandar",
+  "PesoKg": 10,
+  "DistanciaKm": 50,
+  "Destino": "La Plata"
+}
+
+### ✅ CREAR envío express — Válido
+POST {{baseUrl}}/api/envios
+Content-Type: application/json
+
+{
+  "Modalidad": "express",
+  "PesoKg": 5,
+  "DistanciaKm": 100,
+  "Destino": "Buenos Aires"
+}
+
+### ❌ CREAR con peso inválido — Error 400
+POST {{baseUrl}}/api/envios
+Content-Type: application/json
+
+{
+  "Modalidad": "estandar",
+  "PesoKg": -5,
+  "DistanciaKm": 50,
+  "Destino": "La Plata"
+}
+
+### ✅ LISTAR todos
+GET {{baseUrl}}/api/envios
+
+### ✅ OBTENER por ID
+GET {{baseUrl}}/api/envios/1
+
+### ❌ OBTENER que no existe — Error 404
+GET {{baseUrl}}/api/envios/999
+
+### ✅ COTIZACIÓN
+GET {{baseUrl}}/api/envios/1/cotizacion
+
+### ✅ ACTUALIZAR
+PUT {{baseUrl}}/api/envios/1
+Content-Type: application/json
+
+{
+  "Modalidad": "express",
+  "PesoKg": 8,
+  "DistanciaKm": 30,
+  "Destino": "La Plata"
+}
+
+### ✅ CAMBIAR ESTADO
+PATCH {{baseUrl}}/api/envios/1/estado
+
+### ✅ ELIMINAR
+DELETE {{baseUrl}}/api/envios/1
